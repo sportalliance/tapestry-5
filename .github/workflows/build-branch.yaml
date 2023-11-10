@@ -1,12 +1,8 @@
-name: Build Pull Request
+name: Build branch
+run-name: Build of Branch ${{ github.ref_name }}
 
 on:
-  pull_request:
-
-# Allow only one running workflow per pull request
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.id }}
-  cancel-in-progress: true
+  workflow_dispatch:
 
 env:
   MOZ_HEADLESS: true

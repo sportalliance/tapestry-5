@@ -1,0 +1,56 @@
+name: Build branch
+run-name: Build of Branch ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      build-and-publish-image:
+        description: Build and publish libs to Nexus?
+        required: true
+        type: boolean
+
+concurrency:
+  # Only one workflow can run at most
+  group: ${{ github.workflow }}
+
+env:
+  MOZ_HEADLESS: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      statuses: write
+      checks: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Firefox
+        uses: sportalliance/setup-firefox@master
+
+      - name: Setup GeckoDriver
+        uses: sportalliance/setup-geckodriver@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Build & Publish with Gradle
+        run: >-
+          ./gradlew build publish
+          --no-daemon
+          --continue
+          -Dci=false
+          -PspaDeployUserName=${{ secrets.NEXUS_USERNAME }}
+          -PspaDeployPassword=${{ secrets.NEXUS_PASSWORD }}
